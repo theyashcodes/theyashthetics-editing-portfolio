@@ -35,21 +35,25 @@ function useTypewriter(text, speed = 42, startDelay = 700) {
 }
 
 // ─── AnimatedCounter ─────────────────────────────────────────────────────────
-function AnimatedCounter({ target, suffix = '', duration = 2000 }) {
+// ─── AnimatedCounter ─────────────────────────────────────────────────────────
+function AnimatedCounter({ target, suffix = '', duration = 2000, delay = 0 }) {
   const [count, setCount] = useState(0)
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-60px' })
+  const inView = useInView(ref, { once: true })
   useEffect(() => {
     if (!inView) return
     let start = 0
     const step = Math.ceil(target / (duration / 16))
-    const iv = setInterval(() => {
-      start += step
-      if (start >= target) { setCount(target); clearInterval(iv) }
-      else setCount(start)
-    }, 16)
-    return () => clearInterval(iv)
-  }, [inView, target, duration])
+    const timer = setTimeout(() => {
+      const iv = setInterval(() => {
+        start += step
+        if (start >= target) { setCount(target); clearInterval(iv) }
+        else setCount(start)
+      }, 16)
+      return () => clearInterval(iv)
+    }, delay)
+    return () => clearTimeout(timer)
+  }, [inView, target, duration, delay])
   return <span ref={ref}>{count}{suffix}</span>
 }
 
@@ -294,7 +298,7 @@ function HeroContent() {
           {stats.map(({ value, suffix, label }) => (
             <div key={label} className="flex flex-col">
               <span className="text-[28px] font-light text-white tracking-tight tabular-nums leading-none mb-1">
-                <AnimatedCounter target={value} suffix={suffix} />
+                <AnimatedCounter target={value} suffix={suffix} delay={2300} />
               </span>
               <span className="text-[10px] text-white/40 tracking-[0.16em] uppercase font-light">{label}</span>
             </div>
