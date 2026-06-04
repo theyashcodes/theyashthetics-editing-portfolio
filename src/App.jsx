@@ -67,6 +67,17 @@ function Navbar({ dark = false }) {
     { label: 'Contact',href: '#contact' },
   ]
 
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
+
   return (
     <>
       <motion.nav
@@ -106,9 +117,9 @@ function Navbar({ dark = false }) {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-0 z-[100] bg-[#FAFAF9] flex flex-col px-8 py-6"
           >
@@ -145,7 +156,7 @@ function Navbar({ dark = false }) {
 // ─── HeroBackground (cinematic static image) ────────────────────────────────
 function HeroBackground() {
   return (
-    <div className="order-last lg:order-none relative lg:absolute lg:inset-0 lg:z-0 overflow-hidden w-full aspect-[4/3] md:aspect-video lg:aspect-auto lg:h-full">
+    <div className="absolute inset-0 z-0 overflow-hidden w-full h-full">
 
       {/* Ken Burns slow zoom — cinematic entrance */}
       <motion.div
@@ -167,8 +178,8 @@ function HeroBackground() {
       {/* Top gradient — subtle */}
       <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/30 via-transparent to-black/20" />
 
-      {/* Mobile: bottom gradient for readability */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/50 via-transparent to-transparent lg:hidden" />
+      {/* Mobile: dark semi-transparent overlay to ensure text readability */}
+      <div className="absolute inset-0 z-10 bg-black/45 lg:hidden" />
     </div>
   )
 }
@@ -258,8 +269,8 @@ function HeroContent() {
   })
 
   return (
-    <div className="relative z-10 flex flex-col order-first lg:order-none w-full bg-black/60 lg:bg-transparent pb-10 lg:pb-0 lg:min-h-screen">
-      <div className="max-w-7xl mx-auto px-6 pt-6 pb-12 lg:pt-10 w-full">
+    <div className="w-full py-8 md:py-12">
+      <div className="max-w-7xl mx-auto px-6 w-full">
 
         <motion.div {...fadeUp(0.2)} className="flex items-center gap-2.5 mb-8">
           <div className="w-4 h-px bg-white/40" />
@@ -267,20 +278,19 @@ function HeroContent() {
         </motion.div>
 
         <h1
-          className="text-5xl md:text-6xl lg:text-[78px] font-light tracking-[-0.02em] leading-[1.04] text-white mb-8 whitespace-pre-line"
-          style={{ minHeight: '2.15em' }}
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-[78px] font-light tracking-[-0.02em] leading-[1.04] text-white mb-8 whitespace-pre-line min-h-[3.3em] sm:min-h-[2.15em]"
         >
           {displayed}
           {!done && <span className="animate-blink font-extralight text-white/40 ml-0.5">|</span>}
         </h1>
 
-        <motion.p {...fadeUp(2.0)} className="text-[17px] md:text-lg text-white/60 leading-relaxed max-w-[480px] mb-10 font-light">
+        <motion.p {...fadeUp(2.0)} className="text-[15px] sm:text-[17px] md:text-lg text-white/60 leading-relaxed max-w-[480px] mb-8 font-light">
           I edit videos that don&apos;t just look good &mdash;
           <br />they <em className="not-italic text-white/90">feel</em> something.
           From travel films to brand stories.
         </motion.p>
 
-        <motion.div {...fadeUp(2.3)} className="flex flex-wrap items-center gap-8 md:gap-10 mb-12 pb-10 border-b border-white/10">
+        <motion.div {...fadeUp(2.3)} className="flex flex-wrap items-center gap-6 md:gap-10 mb-10 pb-8 border-b border-white/10">
           {stats.map(({ value, suffix, label }) => (
             <div key={label} className="flex flex-col">
               <span className="text-[28px] font-light text-white tracking-tight tabular-nums leading-none mb-1">
@@ -387,7 +397,7 @@ function VideoCard({ src, title, tag, delay = 0, orientation = 'landscape' }) {
       />
 
       {/* Dark gradient on hover */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent transition-opacity duration-400 opacity-100 lg:opacity-0 lg:group-hover:opacity-100" />
 
       {/* Play / Pause button */}
       <div className="absolute inset-0 flex items-center justify-center">
@@ -399,7 +409,7 @@ function VideoCard({ src, title, tag, delay = 0, orientation = 'landscape' }) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="w-11 h-11 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              className="w-11 h-11 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg transition-opacity duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
             >
               <Play size={16} className="text-neutral-900 ml-0.5" fill="currentColor" />
             </motion.div>
@@ -422,7 +432,7 @@ function VideoCard({ src, title, tag, delay = 0, orientation = 'landscape' }) {
       </div>
 
       {/* Bottom info bar */}
-      <div className="absolute bottom-0 left-0 right-0 px-4 py-3 flex items-end justify-between translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+      <div className="absolute bottom-0 left-0 right-0 px-4 py-3 flex items-end justify-between transition-all duration-300 opacity-100 translate-y-0 lg:opacity-0 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0">
         <div className="flex-1 min-w-0 pr-3">
           {tag && <span className="text-[9px] uppercase tracking-[0.18em] text-white/60 font-light block mb-0.5 truncate">{tag}</span>}
           <p className="text-[13px] font-normal text-white leading-tight truncate">{title}</p>
@@ -486,13 +496,13 @@ function WorkSection() {
 
       {/* ── 03 Shorts & Reels — vertical cards centred ── */}
       <SectionLabel index={3} title="Shorts & Reels" subtitle="High-impact vertical short-form content" />
-      <div className="flex justify-center gap-5 mb-24">
+      <div className="flex flex-col md:flex-row justify-center items-center gap-6 mb-24">
         {/*
           Vertical 9:16 cards: limit max-width so they don't stretch wide.
-          On mobile: stack full width. On md+: side by side with fixed width.
+          On mobile: stack vertically, centered. On md+: side by side with fixed width.
         */}
         {shorts.map((v, i) => (
-          <div key={v.src} className="w-full md:w-[280px] lg:w-[320px] flex-shrink-0">
+          <div key={v.src} className="w-full max-w-[320px] md:w-[280px] lg:w-[320px] flex-shrink-0">
             <VideoCard {...v} delay={i * 0.12} />
           </div>
         ))}
@@ -509,9 +519,9 @@ function WorkSection() {
       </div>
 
       {/* Promo / Event / Brand — vertical row */}
-      <div className="flex flex-wrap md:flex-nowrap justify-center gap-5">
+      <div className="flex flex-col md:flex-row justify-center items-center gap-6">
         {otherPortrait.map((v, i) => (
-          <div key={v.src} className="w-full md:w-[280px] lg:w-[300px] flex-shrink-0">
+          <div key={v.src} className="w-full max-w-[320px] md:w-[280px] lg:w-[300px] flex-shrink-0">
             <VideoCard {...v} delay={i * 0.1} />
           </div>
         ))}
@@ -588,10 +598,10 @@ export default function App() {
     <div className="relative bg-neutral-950 text-neutral-900 font-sans selection:bg-emerald-500/20 selection:text-neutral-900 antialiased overflow-x-hidden">
 
       {/* Hero */}
-      <div className="relative flex flex-col lg:block lg:min-h-screen">
+      <div className="relative min-h-[100dvh] flex flex-col justify-between">
         <HeroBackground />
-        <div className="relative z-10 flex flex-col lg:min-h-screen">
-          <Navbar dark />
+        <Navbar dark />
+        <div className="relative z-10 flex-grow flex flex-col justify-center">
           <HeroContent />
         </div>
       </div>
