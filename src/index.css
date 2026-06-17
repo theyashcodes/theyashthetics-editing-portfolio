@@ -46,3 +46,283 @@ html {
 video::-webkit-media-controls { display: none !important; }
 video { outline: none; }
 
+/* ─── Trust strip logos ───────────────────────────────────────────────────── */
+.trust-client {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  font-size: 13px;
+  font-weight: 400;
+  color: #404040;
+  letter-spacing: 0.02em;
+  transition: all 0.3s ease;
+}
+@media (max-width: 640px) {
+  .trust-client {
+    padding: 8px 14px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+  .trust-initial {
+    width: 24px;
+    height: 24px;
+    font-size: 9px;
+  }
+}
+.trust-client:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-1px);
+}
+.trust-initial {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* ─── Community Feedback Section ────────────────────────────────────────── */
+.instagram-grid-container {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 24px;
+}
+@media (min-width: 768px) {
+  .instagram-grid-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .instagram-grid-container {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .instagram-grid-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 16px;
+    padding: 10px 4px 20px 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .instagram-grid-container::-webkit-scrollbar {
+    display: none;
+  }
+  .instagram-card-wrapper {
+    flex: 0 0 88%;
+    scroll-snap-align: center;
+  }
+}
+
+.instagram-card-wrapper {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.01);
+  border-radius: 24px;
+  padding: 32px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.instagram-card-wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.01);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+.instagram-card-inner {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.instagram-comment-img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* ─── Floating CTA ───────────────────────────────────────────────────────── */
+.floating-cta {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 90;
+}
+@media (max-width: 640px) {
+  .floating-cta {
+    bottom: 16px;
+    right: 16px;
+  }
+  .floating-cta-btn {
+    padding: 12px 18px;
+    font-size: 12px;
+  }
+  .floating-cta-menu {
+    min-width: 200px;
+    right: 0;
+  }
+}
+.floating-cta-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  background: #171717;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+.floating-cta-btn:hover {
+  background: #262626;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.floating-cta-menu {
+  position: absolute;
+  bottom: 60px;
+  right: 0;
+  min-width: 220px;
+  padding: 8px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+}
+.floating-cta-menu a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #404040;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.floating-cta-menu a:hover {
+  background: #f5f5f4;
+}
+
+/* ─── Video Breakdown section ─────────────────────────────────────────────── */
+.breakdown-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  flex: 1;
+  padding: 24px 16px;
+}
+.breakdown-step-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #171717;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ─── How We Work timeline ────────────────────────────────────────────────── */
+.process-step {
+  position: relative;
+  flex: 1;
+  padding: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+.process-step:hover {
+  border-color: rgba(16, 185, 129, 0.2);
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateY(-2px);
+}
+.process-step-num {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: #10b981;
+  margin-bottom: 8px;
+}
+
+/* ─── Service cards ───────────────────────────────────────────────────────── */
+.service-card {
+  padding: 28px 24px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  transition: all 0.35s ease;
+}
+.service-card:hover {
+  border-color: rgba(16, 185, 129, 0.25);
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.04);
+}
+
+/* ─── Case study cards ────────────────────────────────────────────────────── */
+.case-card {
+  padding: 32px 28px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  flex: 1;
+}
+.case-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* ─── Category tabs ───────────────────────────────────────────────────────── */
+.cat-tab {
+  padding: 8px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #737373;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.01em;
+}
+.cat-tab:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #171717;
+}
+.cat-tab.active {
+  background: #171717;
+  color: white;
+  border-color: #171717;
+}
