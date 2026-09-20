@@ -349,33 +349,40 @@ let _activeSetPlaying = null
 function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landscape' }) {
   const videoRef = useRef(null)
   const [playing, setPlaying] = useState(false)
+  const [hasStarted, setHasStarted] = useState(false)
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
 
-  const togglePlay = () => {
-    const v = videoRef.current
-    if (!v) return
+  const poster = `/thumbnails/${src.replace(/^\//, '').replace(/\.(mp4|mov)$/, '.jpg')}`
 
+  const togglePlay = () => {
     if (playing) {
-      // Pause this video
-      v.pause()
-      v.muted = true
+      if (videoRef.current) {
+        videoRef.current.pause()
+        videoRef.current.muted = true
+      }
       setPlaying(false)
       _activeVideo = null
       _activeSetPlaying = null
     } else {
-      // Stop any previously playing video
-      if (_activeVideo && _activeVideo !== v) {
+      if (_activeVideo && _activeVideo !== videoRef.current) {
         _activeVideo.pause()
         _activeVideo.muted = true
         if (_activeSetPlaying) _activeSetPlaying(false)
       }
-      // Play this video with sound
-      v.muted = false
-      v.play().catch(() => {})
+
+      setHasStarted(true)
       setPlaying(true)
-      _activeVideo = v
       _activeSetPlaying = setPlaying
+
+      setTimeout(() => {
+        const v = videoRef.current
+        if (v) {
+          v.muted = false
+          v.play().catch(() => {})
+          _activeVideo = v
+        }
+      }, 50)
     }
   }
 
@@ -391,16 +398,26 @@ function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landsc
       className={`group relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.06] cursor-pointer shadow-lg hover:shadow-[0_24px_50px_rgba(168,85,247,0.12)] hover:border-purple-500/30 transition-all duration-500 ${aspectClass}`}
       onClick={togglePlay}
     >
-      <video
-        ref={videoRef}
-        src={src}
-        muted
-        playsInline
-        preload="metadata"
-        loop
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-        onEnded={() => { setPlaying(false); _activeVideo = null; _activeSetPlaying = null }}
+      {/* High-speed crisp image thumbnail (0 video network overhead on initial load) */}
+      <img
+        src={poster}
+        alt={title}
+        loading="lazy"
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${playing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       />
+
+      {/* Video Element (Loaded on demand when user clicks play) */}
+      {hasStarted && (
+        <video
+          ref={videoRef}
+          src={src}
+          playsInline
+          loop
+          preload="auto"
+          className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${playing ? 'opacity-100' : 'opacity-0'}`}
+          onEnded={() => { setPlaying(false); _activeVideo = null; _activeSetPlaying = null }}
+        />
+      )}
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent transition-opacity duration-400 opacity-100 lg:opacity-0 lg:group-hover:opacity-100" />
 
