@@ -346,7 +346,7 @@ let _activeVideo = null
 let _activeSetPlaying = null
 
 // ─── VideoCard ────────────────────────────────────────────────────────────────
-function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landscape' }) {
+function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landscape', onSelect }) {
   const videoRef = useRef(null)
   const [playing, setPlaying] = useState(false)
   const ref = useRef(null)
@@ -355,11 +355,14 @@ function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landsc
   const poster = `/thumbnails/${src.replace(/^\//, '').replace(/\.(mp4|mov)$/, '.jpg')}`
 
   const togglePlay = (e) => {
-    // If user clicks native controls inside playing video, don't toggle manually
+    // If user clicks native controls or open modal button, don't interrupt
     if (e.target.tagName === 'VIDEO' && playing) return
 
     const v = videoRef.current
-    if (!v) return
+    if (!v) {
+      if (onSelect) onSelect({ src, title, tag, subtitle, orientation, poster })
+      return
+    }
 
     if (playing) {
       v.pause()
@@ -376,11 +379,13 @@ function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landsc
       _activeVideo = v
       _activeSetPlaying = setPlaying
 
-      v.muted = false
-      const promise = v.play()
-      if (promise !== undefined) {
-        promise.catch(() => {
-          // Fallback if browser blocks unmuted audio
+      // Start muted for guaranteed 0.05s Safari/Chrome instant play, then unmute
+      v.muted = true
+      const p = v.play()
+      if (p !== undefined) {
+        p.then(() => {
+          v.muted = false
+        }).catch(() => {
           v.muted = true
           v.play().catch(() => {})
         })
@@ -400,17 +405,7 @@ function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landsc
       className={`group relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.06] cursor-pointer shadow-lg hover:shadow-[0_24px_50px_rgba(168,85,247,0.12)] hover:border-purple-500/30 transition-all duration-500 ${aspectClass}`}
       onClick={togglePlay}
     >
-      {/* High-Performance Poster Image (Visible ONLY when NOT playing) */}
-      {!playing && (
-        <img
-          src={poster}
-          alt={title}
-          loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03] z-10"
-        />
-      )}
-
-      {/* Video Element */}
+      {/* Video Element (ALWAYS visible in DOM so Safari never drops decoder context) */}
       <video
         ref={videoRef}
         src={src}
@@ -419,28 +414,32 @@ function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landsc
         loop
         controls={playing}
         preload="metadata"
-        className={`w-full h-full object-cover z-20 ${playing ? 'block' : 'hidden'}`}
+        className="w-full h-full object-cover"
         onEnded={() => { setPlaying(false); _activeVideo = null; _activeSetPlaying = null }}
       />
 
-      {/* Gradient overlay & Play button (Visible ONLY when NOT playing) */}
+      {/* Gradient Overlay & Controls when NOT playing */}
       {!playing && (
         <>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent transition-opacity duration-400 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 z-20" />
-          <div className="absolute inset-0 flex items-center justify-center z-30">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-400 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 pointer-events-none" />
+
+          {/* Center Play Button */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 border border-white/20"
+              className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110 border border-white/30"
             >
               <Play size={18} className="text-white ml-0.5" fill="currentColor" />
             </motion.div>
           </div>
-          <div className="absolute bottom-0 left-0 right-0 px-4 py-3 transition-all duration-300 opacity-100 translate-y-0 lg:opacity-0 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 z-30">
+
+          {/* Title and Tag Badge */}
+          <div className="absolute bottom-0 left-0 right-0 px-4 py-3 transition-all duration-300 opacity-100 translate-y-0 lg:opacity-0 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 pointer-events-none">
             <div className="min-w-0">
-              {tag && <span className="text-[9px] uppercase tracking-[0.18em] text-purple-300/70 font-light block mb-0.5 truncate">{tag}</span>}
+              {tag && <span className="text-[9px] uppercase tracking-[0.18em] text-purple-300/80 font-medium block mb-0.5 truncate">{tag}</span>}
               <p className="text-[13px] font-normal text-white leading-tight truncate">{title}</p>
               {subtitle && <span className="text-[10.5px] text-white/60 font-light block mt-0.5 truncate">{subtitle}</span>}
             </div>
@@ -471,6 +470,7 @@ const ALL_PROJECTS = [
 // ─── WorkSection ─────────────────────────────────────────────────────────────
 function WorkSection({ title = 'Selected Work', subtitle = 'Work organized by industry. Click tabs to filter.', filter = null }) {
   const [activeTab, setActiveTab] = useState('all')
+  const [modalProject, setModalProject] = useState(null)
   const showTabs = !filter
   const tabs = ['all', 'hospitality', 'real-estate', 'events', 'personal-brands']
   const tabLabels = { 'all': 'All', 'hospitality': 'Hospitality', 'real-estate': 'Real Estate', 'events': 'Events', 'personal-brands': 'Personal Brands' }
@@ -485,7 +485,7 @@ function WorkSection({ title = 'Selected Work', subtitle = 'Work organized by in
 
   return (
     <FadeIn>
-      <section id="work" className="px-6 py-16 max-w-7xl mx-auto">
+      <section id="work" className="px-6 py-16 max-w-7xl mx-auto relative">
         <div className="mb-10 pb-4 border-b border-white/[0.06]">
           <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-1 font-heading">{title}</h2>
           <p className="text-[12px] text-white/40 font-light tracking-wide">{subtitle}</p>
@@ -507,7 +507,7 @@ function WorkSection({ title = 'Selected Work', subtitle = 'Work organized by in
 
         {landscape.length > 0 && (
           <div className={`grid grid-cols-1 ${landscape.length > 1 ? 'md:grid-cols-2' : ''} gap-5 mb-8`}>
-            {landscape.map((v, i) => <VideoCard key={v.src} {...v} delay={i * 0.1} />)}
+            {landscape.map((v, i) => <VideoCard key={v.src} {...v} delay={i * 0.1} onSelect={setModalProject} />)}
           </div>
         )}
 
@@ -515,11 +515,52 @@ function WorkSection({ title = 'Selected Work', subtitle = 'Work organized by in
           <div className="flex flex-col md:flex-row justify-center items-center gap-6">
             {portrait.map((v, i) => (
               <div key={v.src} className="w-full max-w-[320px] md:w-[280px] lg:w-[300px] flex-shrink-0">
-                <VideoCard {...v} delay={i * 0.1} />
+                <VideoCard {...v} delay={i * 0.1} onSelect={setModalProject} />
               </div>
             ))}
           </div>
         )}
+
+        {/* Cinema Lightbox Modal if selected */}
+        <AnimatePresence>
+          {modalProject && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-2xl p-4 md:p-8"
+              onClick={() => setModalProject(null)}
+            >
+              <div
+                className="relative w-full max-w-4xl bg-zinc-950 border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
+                onClick={e => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setModalProject(null)}
+                  className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/60 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+                <div className={modalProject.orientation === 'portrait' ? 'max-w-md mx-auto aspect-[9/16]' : 'aspect-video w-full'}>
+                  <video
+                    src={modalProject.src}
+                    poster={modalProject.poster}
+                    autoPlay
+                    controls
+                    playsInline
+                    loop
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-4 bg-zinc-900/80 border-t border-white/10">
+                  <span className="text-xs uppercase tracking-widest text-purple-400 font-medium">{modalProject.tag}</span>
+                  <h3 className="text-lg font-bold text-white font-heading mt-1">{modalProject.title}</h3>
+                  {modalProject.subtitle && <p className="text-sm text-white/60 mt-0.5">{modalProject.subtitle}</p>}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {projects.length === 0 && (
           <p className="text-white/40 text-sm py-12 text-center">No projects in this category yet.</p>
