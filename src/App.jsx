@@ -458,7 +458,7 @@ const ALL_PROJECTS = [
   { src: '/salim-sulaiman-concert-edit.mp4', title: 'Salim-Sulaiman — Live', tag: 'EVENT · AFTERMOVIE', subtitle: 'Concert Highlights & Aftermovie', orientation: 'landscape', categories: ['events'] },
   { src: '/salim-sulaiman-promo.mp4', title: 'Salim-Sulaiman — Promo', tag: 'PERSONAL BRAND · CONTENT', subtitle: 'Personal Brand Promotion', orientation: 'portrait', categories: ['personal-brands'] },
   { src: '/true-detective-intro-remake.mp4', title: 'True Detective — Remake', tag: 'PERSONAL BRAND · CONTENT', subtitle: 'Cinematic Production Showcase', orientation: 'landscape', categories: ['personal-brands'] },
-  { src: '/gemini-solutions-kajal-kukreja.mov', title: 'Gemini Solutions — Kajal Kukreja', tag: 'PERSONAL BRAND · CONTENT', subtitle: 'Personal Brand Showcase', orientation: 'portrait', categories: ['personal-brands'] },
+  { src: '/gemini-solutions-kajal-kukreja.mp4', title: 'Gemini Solutions — Kajal Kukreja', tag: 'PERSONAL BRAND · CONTENT', subtitle: 'Personal Brand Showcase', orientation: 'portrait', categories: ['personal-brands'] },
   { src: '/techwalk2-short.mp4', title: 'TechWalk', tag: 'EVENT · AFTERMOVIE', subtitle: 'Event Highlight Reel', orientation: 'portrait', categories: ['events'] },
   { src: '/semicon-summit-glau.mp4', title: 'Semicon Summit', tag: 'EVENT · AFTERMOVIE', subtitle: 'Corporate Summit Recap', orientation: 'portrait', categories: ['events'] },
 ]
