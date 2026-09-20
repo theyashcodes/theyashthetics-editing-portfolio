@@ -349,40 +349,59 @@ let _activeSetPlaying = null
 function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landscape' }) {
   const videoRef = useRef(null)
   const [playing, setPlaying] = useState(false)
-  const [hasStarted, setHasStarted] = useState(false)
+  const [loading, setLoading] = useState(false)
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
 
   const poster = `/thumbnails/${src.replace(/^\//, '').replace(/\.(mp4|mov)$/, '.jpg')}`
 
   const togglePlay = () => {
+    const v = videoRef.current
+    if (!v) return
+
     if (playing) {
-      if (videoRef.current) {
-        videoRef.current.pause()
-        videoRef.current.muted = true
-      }
+      v.pause()
       setPlaying(false)
+      setLoading(false)
       _activeVideo = null
       _activeSetPlaying = null
     } else {
-      if (_activeVideo && _activeVideo !== videoRef.current) {
+      if (_activeVideo && _activeVideo !== v) {
         _activeVideo.pause()
-        _activeVideo.muted = true
         if (_activeSetPlaying) _activeSetPlaying(false)
       }
 
-      setHasStarted(true)
-      setPlaying(true)
-      _activeSetPlaying = setPlaying
-
-      setTimeout(() => {
-        const v = videoRef.current
-        if (v) {
-          v.muted = false
-          v.play().catch(() => {})
-          _activeVideo = v
-        }
-      }, 50)
+      setLoading(true)
+      v.muted = false
+      const promise = v.play()
+      if (promise !== undefined) {
+        promise
+          .then(() => {
+            setLoading(false)
+            setPlaying(true)
+            _activeVideo = v
+            _activeSetPlaying = setPlaying
+          })
+          .catch(() => {
+            // Autoplay with sound blocked on browser -> fallback to muted play
+            v.muted = true
+            v.play()
+              .then(() => {
+                setLoading(false)
+                setPlaying(true)
+                _activeVideo = v
+                _activeSetPlaying = setPlaying
+              })
+              .catch(() => {
+                setLoading(false)
+              })
+          })
+      } else {
+        setLoading(false)
+        setPlaying(true)
+        _activeVideo = v
+        _activeSetPlaying = setPlaying
+      }
     }
   }
 
@@ -398,24 +417,27 @@ function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landsc
       className={`group relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.06] cursor-pointer shadow-lg hover:shadow-[0_24px_50px_rgba(168,85,247,0.12)] hover:border-purple-500/30 transition-all duration-500 ${aspectClass}`}
       onClick={togglePlay}
     >
-      {/* High-speed crisp image thumbnail (0 video network overhead on initial load) */}
-      <img
-        src={poster}
-        alt={title}
-        loading="lazy"
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${playing ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      {/* Video Element */}
+      <video
+        ref={videoRef}
+        src={src}
+        poster={poster}
+        playsInline
+        loop
+        preload="metadata"
+        className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03] ${playing ? 'opacity-100' : 'opacity-0'}`}
+        onWaiting={() => setLoading(true)}
+        onPlaying={() => { setLoading(false); setPlaying(true) }}
+        onEnded={() => { setPlaying(false); setLoading(false); _activeVideo = null; _activeSetPlaying = null }}
       />
 
-      {/* Video Element (Loaded on demand when user clicks play) */}
-      {hasStarted && (
-        <video
-          ref={videoRef}
-          src={src}
-          playsInline
-          loop
-          preload="auto"
-          className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${playing ? 'opacity-100' : 'opacity-0'}`}
-          onEnded={() => { setPlaying(false); _activeVideo = null; _activeSetPlaying = null }}
+      {/* Poster Image Overlay when not playing */}
+      {!playing && (
+        <img
+          src={poster}
+          alt={title}
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
         />
       )}
 
