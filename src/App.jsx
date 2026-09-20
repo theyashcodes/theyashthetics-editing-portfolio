@@ -349,20 +349,21 @@ let _activeSetPlaying = null
 function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landscape' }) {
   const videoRef = useRef(null)
   const [playing, setPlaying] = useState(false)
-  const [loading, setLoading] = useState(false)
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
 
   const poster = `/thumbnails/${src.replace(/^\//, '').replace(/\.(mp4|mov)$/, '.jpg')}`
 
-  const togglePlay = () => {
+  const togglePlay = (e) => {
+    // If user clicks native controls inside playing video, don't toggle manually
+    if (e.target.tagName === 'VIDEO' && playing) return
+
     const v = videoRef.current
     if (!v) return
 
     if (playing) {
       v.pause()
       setPlaying(false)
-      setLoading(false)
       _activeVideo = null
       _activeSetPlaying = null
     } else {
@@ -371,36 +372,18 @@ function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landsc
         if (_activeSetPlaying) _activeSetPlaying(false)
       }
 
-      setLoading(true)
+      setPlaying(true)
+      _activeVideo = v
+      _activeSetPlaying = setPlaying
+
       v.muted = false
       const promise = v.play()
       if (promise !== undefined) {
-        promise
-          .then(() => {
-            setLoading(false)
-            setPlaying(true)
-            _activeVideo = v
-            _activeSetPlaying = setPlaying
-          })
-          .catch(() => {
-            // Autoplay with sound blocked on browser -> fallback to muted play
-            v.muted = true
-            v.play()
-              .then(() => {
-                setLoading(false)
-                setPlaying(true)
-                _activeVideo = v
-                _activeSetPlaying = setPlaying
-              })
-              .catch(() => {
-                setLoading(false)
-              })
-          })
-      } else {
-        setLoading(false)
-        setPlaying(true)
-        _activeVideo = v
-        _activeSetPlaying = setPlaying
+        promise.catch(() => {
+          // Fallback if browser blocks unmuted audio
+          v.muted = true
+          v.play().catch(() => {})
+        })
       }
     }
   }
@@ -417,6 +400,16 @@ function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landsc
       className={`group relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/[0.06] cursor-pointer shadow-lg hover:shadow-[0_24px_50px_rgba(168,85,247,0.12)] hover:border-purple-500/30 transition-all duration-500 ${aspectClass}`}
       onClick={togglePlay}
     >
+      {/* High-Performance Poster Image (Visible ONLY when NOT playing) */}
+      {!playing && (
+        <img
+          src={poster}
+          alt={title}
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03] z-10"
+        />
+      )}
+
       {/* Video Element */}
       <video
         ref={videoRef}
@@ -424,63 +417,36 @@ function VideoCard({ src, title, tag, subtitle, delay = 0, orientation = 'landsc
         poster={poster}
         playsInline
         loop
+        controls={playing}
         preload="metadata"
-        className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03] ${playing ? 'opacity-100' : 'opacity-0'}`}
-        onWaiting={() => setLoading(true)}
-        onPlaying={() => { setLoading(false); setPlaying(true) }}
-        onEnded={() => { setPlaying(false); setLoading(false); _activeVideo = null; _activeSetPlaying = null }}
+        className={`w-full h-full object-cover z-20 ${playing ? 'block' : 'hidden'}`}
+        onEnded={() => { setPlaying(false); _activeVideo = null; _activeSetPlaying = null }}
       />
 
-      {/* Poster Image Overlay when not playing */}
+      {/* Gradient overlay & Play button (Visible ONLY when NOT playing) */}
       {!playing && (
-        <img
-          src={poster}
-          alt={title}
-          loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-        />
-      )}
-
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent transition-opacity duration-400 opacity-100 lg:opacity-0 lg:group-hover:opacity-100" />
-
-      <div className="absolute inset-0 flex items-center justify-center">
-        <AnimatePresence mode="wait">
-          {!playing ? (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent transition-opacity duration-400 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 z-20" />
+          <div className="absolute inset-0 flex items-center justify-center z-30">
             <motion.div
-              key="play"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="w-11 h-11 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center shadow-lg transition-opacity duration-300 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 border border-white/20"
+              className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 border border-white/20"
             >
-              <Play size={16} className="text-white ml-0.5" fill="currentColor" />
+              <Play size={18} className="text-white ml-0.5" fill="currentColor" />
             </motion.div>
-          ) : (
-            <motion.div
-              key="pause"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 0.7 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center"
-            >
-              <div className="flex gap-1">
-                <div className="w-[3px] h-4 bg-white rounded-full" />
-                <div className="w-[3px] h-4 bg-white rounded-full" />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <div className="absolute bottom-0 left-0 right-0 px-4 py-3 transition-all duration-300 opacity-100 translate-y-0 lg:opacity-0 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0">
-        <div className="min-w-0">
-          {tag && <span className="text-[9px] uppercase tracking-[0.18em] text-purple-300/70 font-light block mb-0.5 truncate">{tag}</span>}
-          <p className="text-[13px] font-normal text-white leading-tight truncate">{title}</p>
-          {subtitle && <span className="text-[10.5px] text-white/60 font-light block mt-0.5 truncate">{subtitle}</span>}
-        </div>
-      </div>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 px-4 py-3 transition-all duration-300 opacity-100 translate-y-0 lg:opacity-0 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 z-30">
+            <div className="min-w-0">
+              {tag && <span className="text-[9px] uppercase tracking-[0.18em] text-purple-300/70 font-light block mb-0.5 truncate">{tag}</span>}
+              <p className="text-[13px] font-normal text-white leading-tight truncate">{title}</p>
+              {subtitle && <span className="text-[10.5px] text-white/60 font-light block mt-0.5 truncate">{subtitle}</span>}
+            </div>
+          </div>
+        </>
+      )}
     </motion.div>
   )
 }
